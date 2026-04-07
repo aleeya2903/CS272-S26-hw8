@@ -64,9 +64,24 @@ function generateLib() {
     resultDiv.innerHTML = "";
 
     let pBuilder = document.createElement("p"); 
-    pBuilder.innerText = "I should start building the madlib!";
+    
+    for (let i = 0; i < MAD_LIB.text.length; i++) {
+        let currSegment = MAD_LIB.text[i];
 
-    resultDiv.appendChild(pBuilder);
+        if (currSegment.segmentType === "static") {
+            pBuilder.innerText += currSegment.text;
+        } else if (currSegment.segmentType === "fillable") {
+            let inputNode = document.getElementById(currSegment.id + "-input");
+            pBuilder.innerText += inputNode.value;
+        } else if (currSegment.segmentType === "newline") {
+            resultDiv.appendChild(pBuilder);
+            pBuilder = document.createElement("p");
+        }
+    }
+
+    if (pBuilder.innerText !== "") {
+        resultDiv.appendChild(pBuilder);
+    }
 }
 
 /**
@@ -90,9 +105,34 @@ function validate() {
     //       the entire form was valid or not.
     for(let i = 0; i < MAD_LIB.fillers.length; i++) {
         let currLib = MAD_LIB.fillers[i];
-        let currInputId = currLib.id + "-input";
-        let currErrorTextId = currLib.id + "-error-text";
-        console.log(currLib, currInputId, currErrorTextId);        
+        let currInputNode = document.getElementById(currLib.id + "-input");
+        let currErrorTextNode = document.getElementById(currLib.id + "-error-text");
+
+        let regex;
+        let errorMessage;
+
+        if (currLib.type === "word") {
+            regex = /^[A-Za-z]+$/;
+            errorMessage = "Please type 1 or more letters, without spaces or special characters.";
+        } else if (currLib.type === "properNoun") {
+            regex = /^[A-Z][A-Za-z]*$/;
+            errorMessage = "Please type 1 or more letters, without special characters, starting with a capital letter.";
+        } else if (currLib.type === "adjective") {
+            regex = /^[A-Za-z]*[Yy]$/;
+            errorMessage = "Please type 1 or more letters, without special characters, ending with a y.";
+        } else if (currLib.type === "quote") {
+            regex = /^(["'])([\s\S]+)\1$/;
+            errorMessage = "Please type 1 or more characters between single or double quotes.";
+        }
+
+        if (!regex.test(currInputNode.value)) {
+            currInputNode.classList.add("is-invalid");
+            currErrorTextNode.innerText = errorMessage;
+            isValid = false;
+        } else {
+            currInputNode.classList.remove("is-invalid");
+            currErrorTextNode.innerText = "";
+        }
     }
 
     return isValid;
